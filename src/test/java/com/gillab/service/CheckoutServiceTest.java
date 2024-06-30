@@ -324,4 +324,235 @@ class CheckoutServiceTest {
     }
 
 
+    @Nested
+    @DisplayName("Checkout Test Scenarios")
+    class CheckoutTests {
+
+        private static final ToolService toolService = ToolService.getInstance(TEST_TOOL_STOCK);
+        private static final HolidayService holidayService = HolidayService.getInstance();
+        private static final CheckoutService checkoutService = CheckoutService.getInstance(toolService, holidayService);
+
+
+        @Test
+        @DisplayName("Test 1 - Should throw exception for invalid Discount Percentage.")
+        void testCheckout_scenario1() {
+            String toolCode = TOOL_CODE_JAKR;
+            LocalDate checkoutDate = LocalDate.of(2015, Month.SEPTEMBER, 3);
+            int rentalDays = 5;
+            int discount = 101;
+
+            ApplicationException exception = assertThrows(
+                    ApplicationException.class,
+                    () -> checkoutService.checkout(toolCode, rentalDays, discount, checkoutDate, CORRELATION_ID),
+                    "Expected checkout to throw, but it didn't"
+            );
+
+            assertAll(
+                    ()->{
+                        assertEquals(INVALID_DISCOUNT.getDisplayName(), exception.getErrorCode(), "Error code should match");
+                        assertEquals(CORRELATION_ID, exception.getCorrelationId(), "Error summary should match");
+                        assertEquals(getErrorSummary(INVALID_DISCOUNT), exception.getErrorSummary(), "Error summary should match");
+                        assertEquals(getFormattedErrorMessage(INVALID_DISCOUNT, String.valueOf(discount), String.valueOf(MIN_DISCOUNT_PERCENTAGE), String.valueOf(MAX_DISCOUNT_PERCENTAGE)), exception.getErrorMessage(), "Error message should match");
+                    }
+            );
+        }
+
+        @Test
+        @DisplayName("Test 2 - Should generate a RentalAgreement and charge for 2 days.")
+        void testCheckout_scenario2() {
+            String toolCode = TOOL_CODE_LADW;
+            LocalDate checkoutDate = LocalDate.of(2020, Month.JULY, 2);
+            int rentalDays = 3;
+            int discount = 10;
+
+            RentalAgreement rentalAgreement = assertDoesNotThrow(
+                    () -> checkoutService.checkout(toolCode, rentalDays, discount, checkoutDate, CORRELATION_ID),
+                    "Expected a valid rental agreement"
+            );
+            System.out.println(rentalAgreement);
+
+            int expectedChargeDays = 2;
+            double expectedDailyRentalCharge = JACKHAMMER_DAILY_CHARGE;
+            double expectedPreDiscountCharge = expectedChargeDays * expectedDailyRentalCharge;
+            double expectedDiscountAmount = expectedPreDiscountCharge * (discount / 100.0);
+            double expectedFinalCharge = expectedPreDiscountCharge - expectedDiscountAmount;
+
+            assertAll(
+                    ()->{
+                        assertNotNull(rentalAgreement, "RentalAgreement should not be null");
+                        assertEquals(toolCode, rentalAgreement.getToolCode(), "Tool code should match");
+                        assertEquals(ToolTypeEnum.LADDER.getDisplayName(), rentalAgreement.getToolType(), "Tool type should match");
+                        assertEquals(TEST_TOOL_STOCK.get(toolCode).getBrand(), rentalAgreement.getToolBrand(), "Tool brand should match");
+                        assertEquals(rentalDays, rentalAgreement.getRentalDays(), "Rental days should match");
+                        assertEquals(checkoutDate, rentalAgreement.getCheckoutDate(), "Checkout date should match");
+                        assertEquals(checkoutDate.plusDays(rentalDays), rentalAgreement.getDueDate(), "Due date should match");
+                        assertEquals(expectedDailyRentalCharge, rentalAgreement.getDailyRentalCharge(), "DailyRentalCharge should match");
+                        assertEquals(expectedChargeDays, rentalAgreement.getChargeDays(), "ChargeDays should match");
+                        assertEquals(expectedPreDiscountCharge, rentalAgreement.getPreDiscountCharge(), "PreDiscountCharge should match");
+                        assertEquals(discount, rentalAgreement.getDiscountPercent(), "DiscountPercent should match");
+                        assertEquals(expectedDiscountAmount, rentalAgreement.getDiscountAmount(), "DiscountAmount should match");
+                        assertEquals(expectedFinalCharge, rentalAgreement.getFinalCharge(), "FinalCharge should match");
+                    }
+            );
+
+        }
+
+        @Test
+        @DisplayName("Test 3 - Should generate a RentalAgreement and charge for 3 days.")
+        void testCheckout_scenario3() {
+            String toolCode = TOOL_CODE_CHNS;
+            LocalDate checkoutDate = LocalDate.of(2015, Month.JULY, 2);
+            int rentalDays = 5;
+            int discount = 25;
+
+            RentalAgreement rentalAgreement = assertDoesNotThrow(
+                    () -> checkoutService.checkout(toolCode, rentalDays, discount, checkoutDate, CORRELATION_ID),
+                    "Expected a valid rental agreement"
+            );
+            System.out.println(rentalAgreement);
+
+            int expectedChargeDays = 3;
+            double expectedDailyRentalCharge = CHAINSAW_DAILY_CHARGE;
+            double expectedPreDiscountCharge = expectedChargeDays * expectedDailyRentalCharge;
+            double expectedDiscountAmount = expectedPreDiscountCharge * (discount / 100.0);
+            double expectedFinalCharge = expectedPreDiscountCharge - expectedDiscountAmount;
+
+            assertAll(
+                    ()->{
+                        assertNotNull(rentalAgreement, "RentalAgreement should not be null");
+                        assertEquals(toolCode, rentalAgreement.getToolCode(), "Tool code should match");
+                        assertEquals(ToolTypeEnum.CHAINSAW.getDisplayName(), rentalAgreement.getToolType(), "Tool type should match");
+                        assertEquals(TEST_TOOL_STOCK.get(toolCode).getBrand(), rentalAgreement.getToolBrand(), "Tool brand should match");
+                        assertEquals(rentalDays, rentalAgreement.getRentalDays(), "Rental days should match");
+                        assertEquals(checkoutDate, rentalAgreement.getCheckoutDate(), "Checkout date should match");
+                        assertEquals(checkoutDate.plusDays(rentalDays), rentalAgreement.getDueDate(), "Due date should match");
+                        assertEquals(expectedDailyRentalCharge, rentalAgreement.getDailyRentalCharge(), "DailyRentalCharge should match");
+                        assertEquals(expectedChargeDays, rentalAgreement.getChargeDays(), "ChargeDays should match");
+                        assertEquals(expectedPreDiscountCharge, rentalAgreement.getPreDiscountCharge(), "PreDiscountCharge should match");
+                        assertEquals(discount, rentalAgreement.getDiscountPercent(), "DiscountPercent should match");
+                        assertEquals(expectedDiscountAmount, rentalAgreement.getDiscountAmount(), "DiscountAmount should match");
+                        assertEquals(expectedFinalCharge, rentalAgreement.getFinalCharge(), "FinalCharge should match");
+                    }
+            );
+        }
+
+        @Test
+        @DisplayName("Test 4 - Should generate a RentalAgreement and charge for 3 days.")
+        void testCheckout_scenario4() {
+            String toolCode = TOOL_CODE_JAKD;
+            LocalDate checkoutDate = LocalDate.of(2015, Month.SEPTEMBER, 3);
+            int rentalDays = 6;
+            int discount = 0;
+
+            RentalAgreement rentalAgreement = assertDoesNotThrow(
+                    () -> checkoutService.checkout(toolCode, rentalDays, discount, checkoutDate, CORRELATION_ID),
+                    "Expected a valid rental agreement"
+            );
+            System.out.println(rentalAgreement);
+
+            int expectedChargeDays = 3;
+            double expectedDailyRentalCharge = JACKHAMMER_DAILY_CHARGE;
+            double expectedPreDiscountCharge = expectedChargeDays * expectedDailyRentalCharge;
+            double expectedDiscountAmount = expectedPreDiscountCharge * (discount / 100.0);
+            double expectedFinalCharge = expectedPreDiscountCharge - expectedDiscountAmount;
+
+            assertAll(
+                    ()->{
+                        assertNotNull(rentalAgreement, "RentalAgreement should not be null");
+                        assertEquals(toolCode, rentalAgreement.getToolCode(), "Tool code should match");
+                        assertEquals(ToolTypeEnum.JACKHAMMER.getDisplayName(), rentalAgreement.getToolType(), "Tool type should match");
+                        assertEquals(TEST_TOOL_STOCK.get(toolCode).getBrand(), rentalAgreement.getToolBrand(), "Tool brand should match");
+                        assertEquals(rentalDays, rentalAgreement.getRentalDays(), "Rental days should match");
+                        assertEquals(checkoutDate, rentalAgreement.getCheckoutDate(), "Checkout date should match");
+                        assertEquals(checkoutDate.plusDays(rentalDays), rentalAgreement.getDueDate(), "Due date should match");
+                        assertEquals(expectedDailyRentalCharge, rentalAgreement.getDailyRentalCharge(), "DailyRentalCharge should match");
+                        assertEquals(expectedChargeDays, rentalAgreement.getChargeDays(), "ChargeDays should match");
+                        assertEquals(expectedPreDiscountCharge, rentalAgreement.getPreDiscountCharge(), "PreDiscountCharge should match");
+                        assertEquals(discount, rentalAgreement.getDiscountPercent(), "DiscountPercent should match");
+                        assertEquals(expectedDiscountAmount, rentalAgreement.getDiscountAmount(), "DiscountAmount should match");
+                        assertEquals(expectedFinalCharge, rentalAgreement.getFinalCharge(), "FinalCharge should match");
+                    }
+            );
+        }
+
+        @Test
+        @DisplayName("Test 5 - Should generate a RentalAgreement and charge for 3 days.")
+        void testCheckout_scenario5() {
+            String toolCode = TOOL_CODE_JAKR;
+            LocalDate checkoutDate = LocalDate.of(2015, Month.JULY, 2);
+            int rentalDays = 9;
+            int discount = 0;
+
+            RentalAgreement rentalAgreement = assertDoesNotThrow(
+                    () -> checkoutService.checkout(toolCode, rentalDays, discount, checkoutDate, CORRELATION_ID),
+                    "Expected a valid rental agreement"
+            );
+            System.out.println(rentalAgreement);
+
+            int expectedChargeDays = 6;
+            double expectedDailyRentalCharge = JACKHAMMER_DAILY_CHARGE;
+            double expectedPreDiscountCharge = expectedChargeDays * expectedDailyRentalCharge;
+            double expectedDiscountAmount = expectedPreDiscountCharge * (discount / 100.0);
+            double expectedFinalCharge = expectedPreDiscountCharge - expectedDiscountAmount;
+
+            assertAll(
+                    ()->{
+                        assertNotNull(rentalAgreement, "RentalAgreement should not be null");
+                        assertEquals(toolCode, rentalAgreement.getToolCode(), "Tool code should match");
+                        assertEquals(ToolTypeEnum.JACKHAMMER.getDisplayName(), rentalAgreement.getToolType(), "Tool type should match");
+                        assertEquals(TEST_TOOL_STOCK.get(toolCode).getBrand(), rentalAgreement.getToolBrand(), "Tool brand should match");
+                        assertEquals(rentalDays, rentalAgreement.getRentalDays(), "Rental days should match");
+                        assertEquals(checkoutDate, rentalAgreement.getCheckoutDate(), "Checkout date should match");
+                        assertEquals(checkoutDate.plusDays(rentalDays), rentalAgreement.getDueDate(), "Due date should match");
+                        assertEquals(expectedDailyRentalCharge, rentalAgreement.getDailyRentalCharge(), "DailyRentalCharge should match");
+                        assertEquals(expectedChargeDays, rentalAgreement.getChargeDays(), "ChargeDays should match");
+                        assertEquals(expectedPreDiscountCharge, rentalAgreement.getPreDiscountCharge(), "PreDiscountCharge should match");
+                        assertEquals(discount, rentalAgreement.getDiscountPercent(), "DiscountPercent should match");
+                        assertEquals(expectedDiscountAmount, rentalAgreement.getDiscountAmount(), "DiscountAmount should match");
+                        assertEquals(expectedFinalCharge, rentalAgreement.getFinalCharge(), "FinalCharge should match");
+                    }
+            );
+        }
+
+        @Test
+        @DisplayName("Test 6 - Should generate a RentalAgreement and charge for 1 day.")
+        void testCheckout_scenario6() {
+            String toolCode = TOOL_CODE_JAKR;
+            LocalDate checkoutDate = LocalDate.of(2020, Month.JULY, 2);
+            int rentalDays = 4;
+            int discount = 50;
+
+            RentalAgreement rentalAgreement = assertDoesNotThrow(
+                    () -> checkoutService.checkout(toolCode, rentalDays, discount, checkoutDate, CORRELATION_ID),
+                    "Expected a valid rental agreement"
+            );
+            System.out.println(rentalAgreement);
+
+            int expectedChargeDays = 1;
+            double expectedDailyRentalCharge = JACKHAMMER_DAILY_CHARGE;
+            double expectedPreDiscountCharge = expectedChargeDays * expectedDailyRentalCharge;
+            double expectedDiscountAmount = expectedPreDiscountCharge * (discount / 100.0);
+            double expectedFinalCharge = expectedPreDiscountCharge - expectedDiscountAmount;
+
+            assertAll(
+                    ()->{
+                        assertNotNull(rentalAgreement, "RentalAgreement should not be null");
+                        assertEquals(toolCode, rentalAgreement.getToolCode(), "Tool code should match");
+                        assertEquals(ToolTypeEnum.JACKHAMMER.getDisplayName(), rentalAgreement.getToolType(), "Tool type should match");
+                        assertEquals(TEST_TOOL_STOCK.get(toolCode).getBrand(), rentalAgreement.getToolBrand(), "Tool brand should match");
+                        assertEquals(rentalDays, rentalAgreement.getRentalDays(), "Rental days should match");
+                        assertEquals(checkoutDate, rentalAgreement.getCheckoutDate(), "Checkout date should match");
+                        assertEquals(checkoutDate.plusDays(rentalDays), rentalAgreement.getDueDate(), "Due date should match");
+                        assertEquals(expectedDailyRentalCharge, rentalAgreement.getDailyRentalCharge(), "DailyRentalCharge should match");
+                        assertEquals(expectedChargeDays, rentalAgreement.getChargeDays(), "ChargeDays should match");
+                        assertEquals(expectedPreDiscountCharge, rentalAgreement.getPreDiscountCharge(), "PreDiscountCharge should match");
+                        assertEquals(discount, rentalAgreement.getDiscountPercent(), "DiscountPercent should match");
+                        assertEquals(expectedDiscountAmount, rentalAgreement.getDiscountAmount(), "DiscountAmount should match");
+                        assertEquals(expectedFinalCharge, rentalAgreement.getFinalCharge(), "FinalCharge should match");
+                    }
+            );
+        }
+
+    }
+
 }
