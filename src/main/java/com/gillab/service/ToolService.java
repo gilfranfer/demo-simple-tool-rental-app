@@ -36,7 +36,7 @@ public class ToolService {
      * @param correlationId ID to track the request.
      * @return {@link Tool}
      */
-    public Tool getToolByCode(final String toolCode, final UUID correlationId) {
+    public Tool getToolByCode(@NonNull final String toolCode, @NonNull final UUID correlationId) {
         Tool tool = toolStock.getOrDefault(toolCode, null);
         if ( isNull(tool) ) {
             throw buildBusinessApplicationException(correlationId, INVALID_TOOL_CODE, toolCode);
@@ -49,7 +49,7 @@ public class ToolService {
      * @param toolType {@link ToolTypeEnum}
      * @return a double value representing the daily rental charge.
      */
-    public double getDailyRentalChargeByToolType(ToolTypeEnum toolType) {
+    public double getDailyRentalChargeByToolType(@NonNull final ToolTypeEnum toolType) {
         return
             switch (toolType) {
                 case LADDER -> LADDER_DAILY_CHARGE;
@@ -65,7 +65,7 @@ public class ToolService {
      * @param toolType {@link ToolTypeEnum}
      * @return true when the tool type generates a charge on a week day, otherwise false.
      */
-    public boolean isToolTypeWeekdayChargeable(ToolTypeEnum toolType) {
+    public boolean isToolTypeWeekdayChargeable(@NonNull final ToolTypeEnum toolType) {
         return true;
 //             switch (toolType) {
 //                case LADDER, CHAINSAW, JACKHAMMER -> true;
@@ -77,7 +77,7 @@ public class ToolService {
      * @param toolType {@link ToolTypeEnum}
      * @return true when the tool type generates a charge during the weekend, otherwise false.
      */
-    public boolean isToolTypeWeekendChargeable(ToolTypeEnum toolType) {
+    public boolean isToolTypeWeekendChargeable(@NonNull final ToolTypeEnum toolType) {
         return
             switch (toolType) {
                 case LADDER -> true;
@@ -90,23 +90,12 @@ public class ToolService {
      * @param toolType {@link ToolTypeEnum}
      * @return true when the tool type generates a charge during a Holiday, otherwise false.
      */
-    public boolean isToolTypeHolidayChargeable(ToolTypeEnum toolType) {
+    public boolean isToolTypeHolidayChargeable(@NonNull final ToolTypeEnum toolType) {
         return
             switch (toolType) {
                 case CHAINSAW -> true;
                 case LADDER, JACKHAMMER -> false;
             };
     }
-
-/*
-    public List<Tool> initializeToolStock(){
-        return Arrays.asList(
-                new Tool(CHAINSAW, "CHNS", "Stihl"),
-                new Tool(LADDER, "LADW", "Werner"),
-                new Tool(JACKHAMMER, "JAKD", "DeWalt"),
-                new Tool(JACKHAMMER, "JAKR", "Ridgid")
-        );
-    }
-*/
 
 }
