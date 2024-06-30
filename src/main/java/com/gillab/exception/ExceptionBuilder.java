@@ -5,7 +5,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
-import java.util.*;
+import java.util.UUID;
 
 import static com.gillab.exception.ApplicationErrors.getErrorSummary;
 import static com.gillab.exception.ApplicationErrors.getFormattedErrorMessage;
@@ -21,7 +21,9 @@ public class ExceptionBuilder {
      * @return
      */
     public static ApplicationException buildBusinessApplicationException(@NonNull final UUID correlationId, @NonNull final ApplicationErrors.ErrorCodesEnum errorCode, String... args) {
-        return new ApplicationException(correlationId, errorCode.getDisplayName(), getErrorSummary(errorCode), getFormattedErrorMessage(errorCode, args));
+        ApplicationException exception = new ApplicationException(correlationId, errorCode.getDisplayName(), getErrorSummary(errorCode), getFormattedErrorMessage(errorCode, args));
+        System.out.println(exception.getErrorMessage());
+        return exception;
     }
 
 }
