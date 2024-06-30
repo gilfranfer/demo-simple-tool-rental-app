@@ -56,7 +56,7 @@ class CheckoutServiceTest {
                         assertEquals(INVALID_RENTAL_DAYS.getDisplayName(), exception.getErrorCode(), "Error code should match");
                         assertEquals(CORRELATION_ID, exception.getCorrelationId(), "Error summary should match");
                         assertEquals(getErrorSummary(INVALID_RENTAL_DAYS), exception.getErrorSummary(), "Error summary should match");
-                        assertEquals(getFormattedErrorMessage(INVALID_RENTAL_DAYS, String.valueOf(rentalDays), String.valueOf(MIN_DISCOUNT_PERCENTAGE), String.valueOf(MAX_DISCOUNT_PERCENTAGE)), exception.getErrorMessage(), "Error message should match");
+                        assertEquals(getFormattedErrorMessage(INVALID_RENTAL_DAYS, String.valueOf(rentalDays), String.valueOf(MIN_RENTAL_DAYS), String.valueOf(MAX_RENTAL_DAYS)), exception.getErrorMessage(), "Error message should match");
                     }
             );
 
@@ -274,8 +274,8 @@ class CheckoutServiceTest {
         @Test
         @DisplayName("Should correctly calculate chargeable days with weekday charges")
         void testCalculateChargeableDays_WeekdayCharges() {
-            LocalDate checkoutDate = LocalDate.of(2024, Month.JULY, 1);
-            LocalDate dueDate = LocalDate.of(2024, Month.JULY, 7);
+            LocalDate checkoutDate = LocalDate.of(2020, Month.JUNE, 1);
+            LocalDate dueDate = LocalDate.of(2020, Month.JUNE, 8);
 
             when(holidayService.isHoliday(any())).thenReturn(false);
 
@@ -290,8 +290,8 @@ class CheckoutServiceTest {
         @Test
         @DisplayName("Should correctly calculate chargeable days with weekend charges")
         void testCalculateChargeableDays_WeekendCharges() {
-            LocalDate checkoutDate = LocalDate.of(2024, Month.JULY, 1);
-            LocalDate dueDate = LocalDate.of(2024, Month.JULY, 7);
+            LocalDate checkoutDate = LocalDate.of(2020, Month.JUNE, 1);
+            LocalDate dueDate = LocalDate.of(2020, Month.JUNE, 8);
 
             when(holidayService.isHoliday(any())).thenReturn(false);
 
@@ -312,7 +312,7 @@ class CheckoutServiceTest {
             when(holidayService.isHoliday(checkoutDate)).thenReturn(false);
             when(holidayService.isHoliday(independenceDay)).thenReturn(true);
 
-            int chargeableDays = checkoutService.calculateChargeableDays(checkoutDate, independenceDay, false, false, true);
+            int chargeableDays = checkoutService.calculateChargeableDays(checkoutDate, independenceDay.plusDays(1), false, false, true);
 
             assertEquals(1, chargeableDays, "Chargeable days should be 1 (only holiday is chargeable)");
 
